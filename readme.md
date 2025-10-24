@@ -5,8 +5,8 @@
 
 **Completa la siguiente información antes de comenzar:**
 
-- **Nombre completo**: [Nombre del estudiante]
-- **Carrera**: [Carrera del estudianete]
+- **Nombre completo**: Wilson Oswaldo Mites Montalvo
+- **Carrera**: Desarrollo de Software PUCETEC
 
 ---
 
