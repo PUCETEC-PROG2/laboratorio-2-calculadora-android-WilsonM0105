@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalTextStyle
@@ -34,10 +35,13 @@ import androidx.compose.ui.unit.sp
 import ec.edu.uisek.calculator.ui.theme.Purple40
 import ec.edu.uisek.calculator.ui.theme.Purple80
 import ec.edu.uisek.calculator.ui.theme.UiSekBlue
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun CalculatorScreen() {
-    var inputText by remember { mutableStateOf("") }
+fun CalculatorScreen(
+    viewModel: CalculatorViewModel = viewModel()
+) {
+    val state = viewModel.state
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -45,36 +49,24 @@ fun CalculatorScreen() {
             .padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        TextField(
-            value = inputText,
-            onValueChange = { inputText = it },
+        Text(
+            text = state.display,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            textStyle = LocalTextStyle.current.copy(
-                fontSize = 36.sp,
-                textAlign = TextAlign.End,
-                color = Color.White
-            ),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = Color.White
-            ),
-            singleLine = true
+                .padding(16.dp),
+            fontSize = 56.sp,
+            textAlign = TextAlign.End,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1
         )
 
-        // Aquí colocaremos la cuadrícula de botones
-        CalculatorGrid { label ->
-            inputText += label
-        }
+        CalculatorGrid (onEvent = viewModel::onEvent)
     }
 }
 
 @Composable
-fun CalculatorGrid(onButtonClick: (String) -> Unit) {
+fun CalculatorGrid(onEvent: (CalculatorEvent) -> Unit) {
     val buttons = listOf(
         "7", "8", "9", "÷",
         "4", "5", "6", "×",
@@ -92,12 +84,28 @@ fun CalculatorGrid(onButtonClick: (String) -> Unit) {
         items(buttons.size) { index ->
             val label = buttons[index]
             CalculatorButton(label = label) {
-                onButtonClick(label)
+                when (label) {
+                    in "0".."9" -> onEvent(CalculatorEvent.Number(label))
+                    "." -> onEvent(CalculatorEvent.Decimal)
+                    "=" -> onEvent(CalculatorEvent.Calculate)
+                    else -> onEvent(CalculatorEvent.Operator(label))
+                }
+            }
+        }
+        item(span = { GridItemSpan(2) }) {
+            CalculatorButton(label = "AC") {
+                onEvent(CalculatorEvent.AllClear)
+            }
+        }
+
+        item {}
+        item {
+            CalculatorButton(label = "C") {
+                onEvent(CalculatorEvent.Clear)
             }
         }
     }
 }
-
 
 @Composable
 fun CalculatorButton(label: String, onClick: () -> Unit) {
@@ -106,10 +114,11 @@ fun CalculatorButton(label: String, onClick: () -> Unit) {
             .aspectRatio(1f)
             .fillMaxSize()
             .clip(CircleShape)
-            .background(if (label in listOf("÷", "×", "−", "+", "=", "."))
-                Purple40
+            .background(
+                if (label in listOf("÷", "×", "−", "+", "=", "."))
+                    Purple40
                 else
-                UiSekBlue
+                    UiSekBlue
             )
             .clickable { onClick() },
         contentAlignment = Alignment.Center
